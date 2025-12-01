@@ -1,6 +1,6 @@
 import bcryptjs from 'bcryptjs'
 import User from '../models/user.model.js'
-import { generateToken } from '../lib/utils.js'
+import { generateToken, hashPassword } from '../lib/utils.js'
 import cloudinary from '../lib/cloudinary.js'
 
 export const signup = async (req, res) => {
@@ -15,16 +15,17 @@ export const signup = async (req, res) => {
         }
       })
     }
-    if (password.length < 6) {
+    if (password.length < 8) {
       return res.status(400).json({
         status: 'fail',
         data: {
-          error: 'Password must be at least 6 characters'
+          error: 'Password must be at least 8 characters'
         }
       })
     }
 
     const user = await User.findOne({ email })
+
     if (user)
       return res.status(400).json({
         status: 'fail',
@@ -33,9 +34,7 @@ export const signup = async (req, res) => {
         }
       })
 
-    // HASH PASSWORD
-    const salt = await bcryptjs.genSalt(10)
-    const hashedPassword = await bcryptjs.hash(password, salt)
+    const hashedPassword = hashPassword(password)
 
     const newUser = new User({
       fullName,
@@ -47,9 +46,11 @@ export const signup = async (req, res) => {
       generateToken(newUser._id, res)
       await newUser.save()
 
+      const { __v, password, ...restUser } = newUser.toObject()
+
       res.status(201).json({
         status: 'success',
-        data: { newUser }
+        data: { ...restUser }
       })
     } else {
       res.status(400).json({
@@ -85,6 +86,7 @@ export const login = async (req, res) => {
     }
 
     const isPasswordCorrect = await bcryptjs.compare(password, user.password)
+
     if (!isPasswordCorrect) {
       return res.status(401).json({
         status: 'fail',
@@ -98,11 +100,7 @@ export const login = async (req, res) => {
 
     res.status(200).json({
       status: 'success',
-      data: {
-        fullName: user.fullName,
-        email: user.email,
-        profilePic: user.profilePic
-      }
+      data: user.toObject()
     })
   } catch (err) {
     console.log('Error in signIn controller: ', err.message)
@@ -116,11 +114,10 @@ export const login = async (req, res) => {
 
 export const logout = (req, res) => {
   try {
-    res.cookie('jwt', '', {
+    res.clearCookie('jwt', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      maxAge: 0
+      sameSite: 'strict'
     })
     res.status(200).json({
       status: 'success',
@@ -140,11 +137,9 @@ export const logout = (req, res) => {
 
 export const updateProfile = async (req, res) => {
   try {
-    const { profilePic } = req.body
-
     const userId = req.user._id
 
-    if (!profilePic) {
+    if (!req.file) {
       return res.status(400).json({
         status: 'fail',
         data: {
@@ -153,19 +148,23 @@ export const updateProfile = async (req, res) => {
       })
     }
 
-    const uploadResponse = await cloudinary.uploader.upload(profilePic)
+    const result = await new Promise((res, rej) => {
+      const stream = cloudinary.uploader.upload_stream((error, result) => {
+        if (error) rej(error)
+        res(result)
+      })
+      stream.end(req.file.buffer)
+    })
 
     const updatedUser = await User.findByIdAndUpdate(
       userId,
-      { profilePic: uploadResponse.secure_url },
+      { profilePic: result.secure_url },
       { new: true }
     )
 
     res.status(200).json({
       status: 'success',
-      data: {
-        updatedUser
-      }
+      data: updatedUser.toObject()
     })
   } catch (err) {
     console.error('Error in updateProfilePicture', err)
@@ -179,22 +178,18 @@ export const updateProfile = async (req, res) => {
 }
 
 export const checkAuth = async (req, res) => {
-
   try {
     res.status(200).json({
-      status:'success',
-      data: {
-        user: req.user
-      }
+      status: 'success',
+      data: req.user.toObject()
     })
   } catch (err) {
     console.error('Error in chechAuth controller', err.message)
     res.status(500).json({
-      status:'fail',
+      status: 'fail',
       data: {
         error: 'Internal Server Error'
       }
     })
   }
-
 }

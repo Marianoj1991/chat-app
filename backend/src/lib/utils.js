@@ -15,3 +15,8 @@ export const generateToken = (userId, res) => {
   return token
 }
 
+export const hashPassword = async (pass) => {
+  const salt = await bcryptjs.genSalt(10)
+  const hashedPassword = await bcryptjs.hash(pass, salt)
+  return hashedPassword
+}
