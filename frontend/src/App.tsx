@@ -22,7 +22,7 @@ export default function App() {
       </div>
     )
   }
-
+  
   return (
     <div data-theme={theme} className='min-h-screen'>
       <Navbar />

@@ -34,7 +34,7 @@ export const signup = async (req, res) => {
         }
       })
 
-    const hashedPassword = hashPassword(password)
+    const hashedPassword = await hashPassword(password)
 
     const newUser = new User({
       fullName,

@@ -42,6 +42,9 @@ export default function ProfilePage() {
                 src={selectedImg || authUser?.profilePic || '/avatar.png'}
                 alt='Profile'
                 className='size-36 rounded-full object-cover border-4 p-1'
+                onError={(e) => {
+                  e.currentTarget.src = '/avatar.png'
+                }}
               />
               <label
                 htmlFor='avatar-upload'

@@ -5,13 +5,13 @@ import User from '../models/user.model.js'
 export const getUsersForSideBar = async (req, res) => {
   try {
     const loggedInUserId = req.user._id
-    const filteredUsers = await User.find({ _id: { $ne: loggedInUserId } }).select(
-      '-password'
-    )
+    const filteredUsers = await User.find({ _id: { $ne: loggedInUserId } })
+      .select('-password')
+      .lean()
 
     res.status(200).json({
       status: 'success',
-      data: { filteredUsers }
+      data: filteredUsers
     })
   } catch (err) {
     console.log('Error in getUsersForSidebar: ', err.message)
@@ -31,16 +31,14 @@ export const getMessages = async (req, res) => {
 
     const messages = await Message.find({
       $or: [
-        { senderId: loggedUser, recerverId: userToChatId },
-        { senderId: userToChatId, recerverId: loggedUser }
+        { senderId: loggedUser, receiverId: userToChatId },
+        { senderId: userToChatId, receiverId: loggedUser }
       ]
-    })
+    }).lean()
 
     res.status(200).json({
       status: 'success',
-      data: {
-        messages
-      }
+      data: messages
     })
   } catch (err) {
     console.log('Error in getMessages: ', err.message)
@@ -53,44 +51,48 @@ export const getMessages = async (req, res) => {
   }
 }
 
-  export const sendMessage = async (req, res) => {
+export const sendMessage = async (req, res) => {
+  try {
+    const { id: receiverId } = req.params
+    const senderId = req.user._id
+    const { text } = req.body
 
-    try {
+    let imageUrl
 
-      const { id: recerverId } = req.params
-      const senderId = req.user._id
-      const { text, image } = req.body
-
-      let imageUrl; 
-
-      if (image) {
-        const updaloImageResponse = await cloudinary.uploader.upload(image)
-        imageUrl = updaloImageResponse.secure_url
-      }
-
-      const newMessage = new Message({
-        senderId, recerverId, text, image: imageUrl
+    if (req.file) {
+      const result = await new Promise((res, rej) => {
+        const stream = cloudinary.uploader.upload_stream((error, result) => {
+          if (error) rej(error)
+          res(result)
+        })
+        stream.end(req.file.buffer)
       })
 
-      await newMessage.save()
-
-      // TODO: realtime functionality goes here ==> socket.io
-
-      res.status(200).json({
-        status: 'success',
-        data: {
-          newMessage
-        }
-      })
-
-    } catch (err) {
-      console.log('Error in sendMessage controller method', err);
-      res.status(500).json({
-        status: 'fail',
-        data: {
-          error: err.message || 'Internal server error'
-        }
-      })
+      imageUrl = result.secure_url
     }
 
+    const newMessage = new Message({
+      senderId,
+      receiverId,
+      text,
+      image: imageUrl
+    })
+
+    await newMessage.save()
+
+    // TODO: realtime functionality goes here ==> socket.io
+
+    res.status(200).json({
+      status: 'success',
+      data: newMessage.toObject()
+    })
+  } catch (err) {
+    console.log('Error in sendMessage controller method', err)
+    res.status(500).json({
+      status: 'fail',
+      data: {
+        error: err.message || 'Internal server error'
+      }
+    })
   }
+}

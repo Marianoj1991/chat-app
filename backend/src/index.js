@@ -14,15 +14,17 @@ const PORT = process.env.PORT
 // MIDDLEWARE
 app.use(express.json())
 app.use(cookieParser())
-app.use(cors({
-  origin: 'http://localhost:5173',
-  credentials: true
-}))
+app.use(
+  cors({
+    origin: 'http://localhost:5173',
+    credentials: true
+  })
+)
 
-app.use("/api/auth", authRoutes)
-app.use("/api/message", messageRoutes)  
+app.use('/api/auth', authRoutes)
+app.use('/api/messages', messageRoutes)
 
 app.listen(PORT, async () => {
-  console.log(`Server running on port ${PORT}. Press ctrl + C to terminate`);
+  console.log(`Server running on port ${PORT}. Press ctrl + C to terminate`)
   await connectDB()
 })

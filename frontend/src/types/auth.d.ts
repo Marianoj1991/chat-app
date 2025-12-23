@@ -11,12 +11,27 @@ interface AuthState {
   isLoggingIn: boolean
   isUpdatingProfile: boolean
   isCheckingAuth: boolean
+  onlineUsers: string[]
   checkAuth: () => Promise<void>
   signUp: (data: IFormState) => Promise<void>
   logout: () => Promise<void>
   login: (data: IFormState) => Promise<void>
   updateProfile: (data: FormData) => Promise<void>
 }
+
+interface IUseChatStore {
+  messages: IMessage[]
+  users: []
+  selectedUser: AuthUser | null
+  isUsersLoading: boolean
+  isMessagesLoading: boolean
+  isSendingMessage: boolean
+  getUsers: () => Promise<void>
+  getMessages: (userId: string) => Promise<void>
+  setSelectedUser: (selectedUser: AuthUser | null) => void
+  sendMessage: (data: FormData) => void 
+}
+
 
 interface UpdateProfileData {
   username?: string
@@ -58,3 +73,12 @@ type CheckAuthResponse = ApiResponse<AuthUser>
 //   user: AuthUser
 // }
 
+type IMessage = {
+  _id: string
+  senderId: string
+  receiverId: string
+  text: string
+  image?: string
+  createdAt: Date
+  updatedAt?: Date
+}
