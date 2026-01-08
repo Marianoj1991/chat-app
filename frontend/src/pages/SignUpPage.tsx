@@ -13,6 +13,7 @@ import { Link } from 'react-router-dom'
 import { AuthImagePattern } from '../components'
 import toast from 'react-hot-toast'
 import validateSignUpForm from '../lib/validateSignUpForm'
+import { IFormState } from '../types/auth'
 
 export default function SignUpPage() {
   const [showPassword, setShowPassword] = useState(false)

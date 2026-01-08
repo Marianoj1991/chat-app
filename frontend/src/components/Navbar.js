@@ -1,0 +1,8 @@
+import { jsx as _jsx, jsxs as _jsxs, Fragment as _Fragment } from "react/jsx-runtime";
+import { Link } from 'react-router-dom';
+import { useAuthStore } from '../store/useAuthStore';
+import { LogOut, MessageSquare, Settings, User } from 'lucide-react';
+export default function Navbar() {
+    const { authUser, logout } = useAuthStore();
+    return (_jsx("header", { className: 'bg-base-100 border-b border-base-300 fixed w-full top-0 z-40 backdrop-blur-lg', children: _jsx("nav", { className: 'container mx-auto px-4 h-16', children: _jsxs("div", { className: 'flex items-center justify-between h-full', children: [_jsx("div", { className: 'flex items-center gap-8', children: _jsxs(Link, { to: '/', className: 'flex items-center gap-2.5 hover:opacity-80 transition-all', children: [_jsx("div", { className: 'size-9 rounded-lg bg-primary/10 flex items-center justify-center', children: _jsx(MessageSquare, { className: 'w-5 h-5 text-primary' }) }), _jsx("h1", { className: 'text-lg font-bold', children: "Chatty" })] }) }), _jsxs("div", { className: 'flex items-center gap-2', children: [_jsxs(Link, { to: '/settings', className: 'btn btn-sm gap-2 transition-colors', children: [_jsx(Settings, { className: 'size-4' }), _jsx("span", { className: 'hidden sm:inline', children: "Settings" })] }), authUser && (_jsxs(_Fragment, { children: [_jsxs(Link, { to: '/profile', className: 'btn btn-sm gap-2', children: [_jsx(User, { className: 'size-5' }), _jsx("span", { className: 'hidden sm:inline', children: "Profile" })] }), _jsxs("button", { className: 'flex gap-2 items-center cursor-pointer', onClick: logout, children: [_jsx(LogOut, { className: 'size-5' }), _jsx("span", { className: 'hidden sm:inline', children: "Logout" })] })] }))] })] }) }) }));
+}

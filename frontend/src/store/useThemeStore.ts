@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { ThemeState } from "../types/auth";
 
 
 export const useThemeStore = create<ThemeState>((set) => ({
