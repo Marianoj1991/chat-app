@@ -7,23 +7,7 @@ export const signup = async (req, res) => {
   const { fullName, email, password } = req.body || {}
 
   try {
-    if (!fullName || !email || !password) {
-      return res.status(400).json({
-        status: 'fail',
-        data: {
-          error: 'All fields "fullName, email and password" are required'
-        }
-      })
-    }
-    if (password.length < 8) {
-      return res.status(400).json({
-        status: 'fail',
-        data: {
-          error: 'Password must be at least 8 characters'
-        }
-      })
-    }
-
+  
     const user = await User.findOne({ email })
 
     if (user)
@@ -74,10 +58,10 @@ export const login = async (req, res) => {
   const { email, password } = req.body || {}
 
   try {
-    const user = await User.findOne({ email })
+    const user = await User.findOne({ email }).select('+password')
 
     if (!user) {
-      res.status(400).json({
+      return res.status(401).json({
         status: 'fail',
         data: {
           error: 'Invalid credentials'
@@ -98,12 +82,14 @@ export const login = async (req, res) => {
 
     generateToken(user._id, res)
 
+    const { password: _, ...restUser } = user.toObject()
+
     res.status(200).json({
       status: 'success',
-      data: user.toObject()
+      data: restUser
     })
   } catch (err) {
-    console.log('Error in signIn controller: ', err.message)
+    console.log('Error in login controller: ', err.message)
     res.status(err?.status || 500).json({
       data: {
         error: err.message

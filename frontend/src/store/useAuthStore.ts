@@ -2,18 +2,30 @@ import { create } from 'zustand'
 import { axiosInstance } from '../lib/axios'
 import toast from 'react-hot-toast'
 import axios from 'axios'
+import {
+  ApiError,
+  AuthState,
+  CheckAuthResponse,
+  IFormState
+} from '../types/auth'
+import { io } from 'socket.io-client'
+import { BASE_URL } from '../constants'
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   authUser: null,
+  onlineUsers: [],
+  socket: null,
+
   isSigningUp: false,
   isLoggingIn: false,
   isUpdatingProfile: false,
   isCheckingAuth: true,
-  onlineUsers: [],
+
   checkAuth: async () => {
     try {
       const res = await axiosInstance.get<CheckAuthResponse>('/auth/check')
       set({ authUser: res.data.data })
+      get().connectSocket()
     } catch (err) {
       console.log('Error in checkAuth: ', err)
       set({ authUser: null })
@@ -21,6 +33,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       set({ isCheckingAuth: false })
     }
   },
+
   signUp: async (data: IFormState) => {
     set({ isSigningUp: true })
     try {
@@ -30,6 +43,7 @@ export const useAuthStore = create<AuthState>((set) => ({
       )
       set({ authUser: resp.data.data })
       toast.success('Account created successfully')
+      get().connectSocket()
     } catch (err: unknown) {
       if (axios.isAxiosError<ApiError>(err)) {
         const message =
@@ -47,6 +61,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     try {
       await axiosInstance.post('/auth/logout')
       set({ authUser: null })
+      get().disconnectSocket()
       toast.success('Logged out successfully')
     } catch (err: unknown) {
       if (axios.isAxiosError<ApiError>(err)) {
@@ -67,9 +82,9 @@ export const useAuthStore = create<AuthState>((set) => ({
         '/auth/login',
         formData
       )
-
       set({ authUser: resp.data.data })
       toast.success('User logged in successfully')
+      get().connectSocket()
     } catch (err: unknown) {
       if (axios.isAxiosError<ApiError>(err)) {
         const message =
@@ -84,13 +99,13 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 
-  updateProfile: async (data: UpdateProfileData) => {
+  updateProfile: async (data: FormData) => {
     set({ isUpdatingProfile: true })
 
     try {
       const resp = await axiosInstance.put('/auth/update-profile', data)
       set({ authUser: resp.data.data })
-       toast.success('User updated successfully')
+      toast.success('User updated successfully')
     } catch (error) {
       if (axios.isAxiosError<ApiError>(error)) {
         const message =
@@ -101,5 +116,19 @@ export const useAuthStore = create<AuthState>((set) => ({
     } finally {
       set({ isUpdatingProfile: false })
     }
+  },
+  connectSocket: () => {
+    if (!get().authUser || get().socket?.connected) return
+    const socket = io(BASE_URL, {
+      query: { userId: get().authUser?._id }
+    })
+    socket.connect()
+    set({ socket: socket })
+    socket.on('getUsersConnected', (usersConnected: string[]) => {
+      set({ onlineUsers: usersConnected })
+    })
+  },
+  disconnectSocket: () => {
+    if (get().socket?.connected) get().socket?.disconnect()
   }
 }))

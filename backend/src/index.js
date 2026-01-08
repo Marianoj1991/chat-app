@@ -5,9 +5,9 @@ import messageRoutes from './routes/message.route.js'
 import { connectDB } from './lib/db.js'
 import cookieParser from 'cookie-parser'
 import cors from 'cors'
+import { server, app } from './lib/socket.js'
 
 dotenv.config()
-const app = express()
 
 const PORT = process.env.PORT
 
@@ -24,7 +24,7 @@ app.use(
 app.use('/api/auth', authRoutes)
 app.use('/api/messages', messageRoutes)
 
-app.listen(PORT, async () => {
+server.listen(PORT, async () => {
   console.log(`Server running on port ${PORT}. Press ctrl + C to terminate`)
   await connectDB()
 })

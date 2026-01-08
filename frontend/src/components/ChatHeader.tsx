@@ -7,7 +7,7 @@ export default function ChatHeader() {
   const { onlineUsers } = useAuthStore()
 
   return (
-    <div className='border-b border-base-300 flex justify-between items-center p-4'>
+    <div className='border-b border-base-300 flex justify-between items-center p-4 bg-base-100'>
       {/* LEFT */}
       <div className='relative flex gap-2 items-center'>
         <div className='size-10 rounded-full'>

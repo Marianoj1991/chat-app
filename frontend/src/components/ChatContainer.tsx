@@ -5,7 +5,7 @@ import { useAuthStore } from '../store/useAuthStore'
 import { formatMessageTime } from '../lib/utils'
 
 export default function ChatContainer() {
-  const { messages, getMessages, selectedUser, isMessagesLoading } =
+  const { messages, getMessages, selectedUser, isMessagesLoading, subscribeToNewMessages, unsubscribeFromNewMessages } =
     useChatStore()
   const { authUser } = useAuthStore()
   const bottomRef = useRef<HTMLDivElement | null>(null)
@@ -15,12 +15,21 @@ export default function ChatContainer() {
   }, [messages])
 
   useEffect(() => {
-    if (selectedUser?._id) getMessages(selectedUser?._id)
-  }, [getMessages, selectedUser])
+    if (selectedUser) getMessages(selectedUser._id)
+    subscribeToNewMessages()
+    return () => {
+      unsubscribeFromNewMessages()
+    }
+  }, [
+    getMessages,
+    selectedUser,
+    subscribeToNewMessages,
+    unsubscribeFromNewMessages
+  ])
 
   if (isMessagesLoading) {
     return (
-      <div className='flex-1 flex flex-col overflow-auto'>
+      <div className='flex-1 flex flex-col overflow-auto '>
         <ChatHeader />
         <MessageSkeleton />
         <MessageInput />
@@ -31,12 +40,13 @@ export default function ChatContainer() {
   return (
     <div className='flex-1 flex justify-between flex-col overflow-auto'>
       {/* TOP */}
-
-      <ChatHeader />
+      <div className='sticky top-0 z-50'>
+        <ChatHeader />
+      </div>
 
       {/* MIDDLE */}
 
-      <div className='flex-1 flex flex-col justify-end p-4'>
+      <div className='flex-1 flex flex-col justify-end p-4 mt-20'>
         {messages.map((m) => (
           <div
             key={m._id}
@@ -76,9 +86,9 @@ export default function ChatContainer() {
             </div>
           </div>
         ))}
-        <div ref={bottomRef}></div>
       </div>
 
+      <div ref={bottomRef}></div>
       {/* BOTTOM */}
       <MessageInput />
     </div>

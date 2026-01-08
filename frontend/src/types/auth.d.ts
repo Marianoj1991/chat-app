@@ -1,5 +1,7 @@
 declare module 'daisyui'
 
+import { Socket } from 'socket.io-client'
+
 interface ThemeState {
   theme: string
   setTheme: (theme: string) => void
@@ -12,11 +14,14 @@ interface AuthState {
   isUpdatingProfile: boolean
   isCheckingAuth: boolean
   onlineUsers: string[]
+  socket: Socket | null
   checkAuth: () => Promise<void>
   signUp: (data: IFormState) => Promise<void>
   logout: () => Promise<void>
   login: (data: IFormState) => Promise<void>
   updateProfile: (data: FormData) => Promise<void>
+  connectSocket: () => void
+  disconnectSocket: () => void
 }
 
 interface IUseChatStore {
@@ -29,16 +34,10 @@ interface IUseChatStore {
   getUsers: () => Promise<void>
   getMessages: (userId: string) => Promise<void>
   setSelectedUser: (selectedUser: AuthUser | null) => void
-  sendMessage: (data: FormData) => void 
+  sendMessage: (data: FormData) => void
+  subscribeToNewMessages  : () => void
+  unsubscribeFromNewMessages: () => void
 }
-
-
-interface UpdateProfileData {
-  username?: string
-  email?: string
-  profilePic?: ArrayBuffer | string | null
-}
-
 
 interface IFormState {
   fullName?: string

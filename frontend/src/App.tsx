@@ -14,7 +14,7 @@ export default function App() {
   useEffect(() => {
     checkAuth()
   }, [checkAuth])
-  
+
   if (isCheckingAuth && !authUser) {
     return (
       <div className='flex items-center justify-center h-screen'>
@@ -22,12 +22,15 @@ export default function App() {
       </div>
     )
   }
-  
+
   return (
-    <div data-theme={theme} className='min-h-screen'>
+    <div
+      data-theme={theme}
+      className='min-h-screen'
+    >
       <Navbar />
       <main>
-        <Outlet />  
+        <Outlet />
       </main>
       <Toaster
         position='top-center'

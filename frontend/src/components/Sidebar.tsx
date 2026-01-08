@@ -1,11 +1,25 @@
 import { Users } from 'lucide-react'
 import { useChatStore } from '../store/useChatStore'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useAuthStore } from '../store/useAuthStore'
+import { AuthUser } from '../types/auth'
 
 export default function Sidebar() {
   const { users, getUsers, selectedUser, setSelectedUser } = useChatStore()
   const { onlineUsers } = useAuthStore()
+  const [showOnline, setShowOnline] = useState<boolean>(false)
+  const [filteredUsers, setFilteredUsers] = useState<AuthUser[]>([])
+
+  useEffect(() => {
+    if (showOnline) {
+      const filteredUsers = users.filter((user: AuthUser) =>
+        onlineUsers.includes(user._id)
+      )
+      setFilteredUsers(filteredUsers)
+    } else {
+      setFilteredUsers(users)
+    }
+  }, [showOnline, users, onlineUsers])
 
   useEffect(() => {
     getUsers()
@@ -14,21 +28,35 @@ export default function Sidebar() {
   return (
     <aside className='h-full w-20 md:w-60 border-r border-base-300 transition-all duration-200 p-4 flex flex-col'>
       {/* Top */}
-      <div className='border-b border-base-300 w-full px-3 py-5'>
+      <div className='flex flex-col gap-3 border-b border-base-300 w-full px-3 py-5'>
         <div className='flex items-center gap-2'>
           <Users className='size-6' />
           <span className='font-medium hidden md:block'>Contacts</span>
         </div>
-        {/* <div className="flex items-center gap-1">
-          <input type="checkbox" checked={showOnline} onChange={(e) => setShowOnline(e.target.checked)} />
-          <span>Show online only {'('}0 online{')'}</span>
-        </div> */}
+        <div>
+          <label
+            htmlFor='onlineOnly'
+            className='flex items-center gap-2 cursor-pointer'
+          >
+            <input
+              id='onlineOnly'
+              type='checkbox'
+              checked={showOnline}
+              onChange={(e) => setShowOnline(e.target.checked)}
+              className='checkbox checkbox-sm'
+            />
+            <span className='text-[12px]'>
+              Show online only {'('}
+              {onlineUsers.length - 1} online{')'}
+            </span>
+          </label>
+        </div>
       </div>
 
       {/* Bottom */}
 
       <section className='overflow-y-auto w-full py-3'>
-        {users.map((user: AuthUser) => (
+        {filteredUsers.map((user: AuthUser) => (
           <button
             key={user._id}
             onClick={() => setSelectedUser(user)}
